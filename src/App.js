@@ -1,13 +1,36 @@
-import React from 'react';
-import logo from './logo.svg';
+import WordRow from './components/WordRow';
+import React, { useState } from 'react';
 import './App.css';
+import { checkGuess } from './utils/word-checker';
 
 function App() {
   const WordOfTheDay = 'FORGO'
+  const [guesses, setGuesses] = useState([]);
+  const [currentWord, setCurrentWord] = useState('');
+  const [gameState, setGameState] = useState('running');
 
-  const backspace = () => {}
-  const enter = () => {}
-  const word = (letter) => {}
+  const backspace = () => {
+    setCurrentWord((prev) => prev && prev.slice(0, -1));
+  }
+  const enter = () => {
+    if (currentWord.length == 5) {
+      setGuesses((prev) => [...prev, currentWord])
+      setCurrentWord('');
+
+      const result = checkGuess(currentWord, WordOfTheDay);
+      if (
+        Object.values(result).every(v => v === 'green') && 
+        Object.values(result).length == 5
+      ) {
+        setGameState('won')
+      } else if (guesses.length == 4) {
+        setGameState('lost')
+      }
+    }
+  }
+  const word = (letter) => {
+    setCurrentWord((prev) => prev.length == 5 ? prev : prev + letter.toUpperCase());
+  }
 
   const handleKeyDown = e => {
     let pressedKey = String(e.key)
@@ -34,23 +57,15 @@ function App() {
     return () => {
       window.removeEventListener('keyup', handleKeyDown);
     };
-  }, []);
+  }, [currentWord, gameState]);
 
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        {guesses.map((guess) => (
+          <WordRow word={guess} result={checkGuess(guess, WordOfTheDay)} />
+        ))}
+        {gameState === 'running' && <WordRow word={currentWord} />}
       </header>
     </div>
   );
